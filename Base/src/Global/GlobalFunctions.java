@@ -39,8 +39,8 @@ public class GlobalFunctions {
         return message;
     }
     
-    public static synchronized void setLatency(long latency, int numberProxy) throws Exception {
-        File file = new File("Proxy" + numberProxy + "Latency.txt");
+    public static synchronized void setLatency(String type,long latency) throws Exception {
+        File file = new File(type + ".txt");
         int i = 0;
         if(file.exists()){
             Scanner scanner = new Scanner(file);
@@ -53,12 +53,28 @@ public class GlobalFunctions {
             outputFile.print(latency/(i+1));
             outputFile.close();
         }else {
-            throw new Exception("The file Proxy" + numberProxy + "Latency.txt does not exist");
+            throw new Exception("The file " + file.getName() + " does not exist");
         }
     }
 
-    public static synchronized long getLatency(int numberProxy) throws Exception {
-        File file = new File("Proxy" + numberProxy + "Latency.txt");
+    public static int getExternalVariables(String name) throws Exception {
+        File file = new File("ExternalVariables.txt");
+        if(file.exists()) {
+            Scanner scanner = new Scanner(file);
+            while(scanner.hasNext()){
+                String [] port = scanner.nextLine().split(" ");
+                if(port[0].equals(name)) return Integer.valueOf(port[1]);
+            }
+            scanner.close();
+        }else {
+            throw new Exception("The file ExternalVariables.txt does not exist");
+        }
+        if(name.equals("MAXSERVER")) return 0;
+        return 8000;
+    }
+
+    public static synchronized long getLatency(String type) throws Exception {
+        File file = new File(type + ".txt");
         long latency = 300;
         if(file.exists()){
             Scanner scanner = new Scanner(file);
@@ -67,7 +83,7 @@ public class GlobalFunctions {
             }
             scanner.close();
         }else {
-            throw new Exception("The file Proxy" + numberProxy + "Latency.txt does not exist");
+            throw new Exception("The file " + file.getName() + " does not exist");
         }
         return latency;
     }
