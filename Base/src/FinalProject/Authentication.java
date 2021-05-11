@@ -8,7 +8,7 @@ import java.io.*;
 public class Authentication {
     public static void main(String[] args) {
         try {
-            ServerSocket listenSocket = new ServerSocket(GlobalFunctions.getIP("AUTH"));
+            ServerSocket listenSocket = new ServerSocket(GlobalFunctions.getPort("AUTH"));
 
             while (true) {
                 System.out.println("Waiting auth node...");
@@ -56,12 +56,21 @@ class Connection extends Thread {
                     this.doConnect();
                     this.doLogin((byte[]) cr.getArgs().get(0), (byte[]) cr.getArgs().get(1));
                     this.doDisconnet();
+                }else if(cr.getSubtype().equals("OP_REGISTER")) {
+                    if(!GlobalFunctions.isUser(GlobalFunctions.decrypt((byte []) cr.getArgs().get(1)))) {
+                        GlobalFunctions.addUser((byte[]) cr.getArgs().get(0), (byte []) cr.getArgs().get(1), (byte []) cr.getArgs().get(2));
+                        this.osClient.writeObject(new ControlResponse("OP_REGISTER_OK"));
+                    }else {
+                        this.osClient.writeObject(new ControlResponse("OP_REGISTER_NOK"));
+                    }
                 }
             }
         } catch (ClassNotFoundException e) {
             System.out.println("ClassNotFoundException connection (Auth): " + e.getMessage());
         } catch (IOException e) {
             System.out.println("Readline connection (Auth): " + e.getMessage());
+        }catch (Exception e){
+            this.osClient.writeObject(new ControlResponse("OP_REGISTER_NOK"));
         }
     }
 
@@ -79,12 +88,16 @@ class Connection extends Thread {
 
                 ControlResponse crs = (ControlRespose) this.isCentral.readObject();
                 this.done = true;
+                crs.getArgs.add(GlobalFunctions.getUserName(emailDecrypt));
                 this.osClient.writeObject(crs);
                 GlobalFunctions.setLatency("AuthLogin", (this.end - this.start));
                 this.resetCurrentTime();
+            }else {
+                this.osClient.writeObject(new ControlResponse("OP_LOGIN_NOK"));
             }
         } catch (Exception e) {
             System.out.println("doLogin (Auth): " + e.getMessage());
+            this.osClient.writeObject(new ControlResponse("OP_LOGIN_NOK"));
         }
     }
 

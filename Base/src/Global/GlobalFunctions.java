@@ -136,7 +136,7 @@ public class GlobalFunctions {
     	}
     }
 
-    static synchronized void addUser(byte [] email, byte [] password) throws Exception {
+    public static synchronized void addUser(byte [] user, byte [] email, byte [] password) throws Exception {
     	String users = "";
     	File file = new File("Users.txt");
         if(file.exists()) {
@@ -156,13 +156,18 @@ public class GlobalFunctions {
             	if(i == password.length-1) outputFile.print(password[i]);
             	else outputFile.print(password[i] + " ");
             }
+            outputFile.print("/");
+            for(int i = 0; i < user.length; i++){
+                if(i == user.length-1) outputFile.print(email[i]);
+                else outputFile.print(user[i]+ " ");
+            }
             outputFile.close();
         }else {
             throw new Exception("The file "+file.getName()+" does not exist");
         }
     }
 
-    static synchronized boolean isUser(String email) throws Exception {
+    public static synchronized boolean isUser(String email) throws Exception {
     	File file = new File("Users.txt");
         if(file.exists()) {
             @SuppressWarnings("resource")
@@ -185,17 +190,17 @@ public class GlobalFunctions {
         return false;
     }
     
-    static synchronized String getPassword(String email) throws Exception {
+    public static synchronized String getPassword(String email) throws Exception {
     	File file = new File("Users.txt");
         if(file.exists()) {
             @SuppressWarnings("resource")
 			Scanner scanner = new Scanner(file);
             while(scanner.hasNext()){
             	String [] encryptedPair = scanner.nextLine().split("/");
-            	String [] encryptedName = encryptedPair[0].split(" ");
+            	String [] encryptedEmail = encryptedPair[0].split(" ");
             	String [] encryptedPassword = encryptedPair[1].split(" ");
-                byte [] nameInByte = new byte[encryptedName.length], passwordInByte = new byte[encryptedPassword.length];
-                for(int i = 0; i < encryptedName.length; i++) nameInByte[i] = Byte.valueOf(encryptedName[i]);
+                byte [] nameInByte = new byte[encryptedEmail.length], passwordInByte = new byte[encryptedPassword.length];
+                for(int i = 0; i < encryptedEmail.length; i++) nameInByte[i] = Byte.valueOf(encryptedEmail[i]);
                 for(int i = 0; i < encryptedPassword.length; i++) passwordInByte[i] = Byte.valueOf(encryptedPassword[i]);
                 if(GlobalFunctions.decrypt(nameInByte).equals(email)) {
                 	return GlobalFunctions.decrypt(passwordInByte);
@@ -207,5 +212,51 @@ public class GlobalFunctions {
         }
         
         return "";
+    }
+
+    public static synchronized String getUserName(String email) throws Exception {
+        File file = new File("Users.txt");
+        if(file.exists()) {
+            Scanner scanner = new Scanner(file);
+            while(scanner.hasNext()) {
+                String [] encryptedPair = scanner.nextLine().split("/");
+            	String [] encryptedEmail = encryptedPair[0].split(" ");
+            	String [] encryptedName = encryptedPair[2].split(" ");
+                byte [] emailInByte = new byte[encryptedEmail.length], nameInByte = new byte[encryptedName.length];
+                for(int i = 0; i < encryptedEmail.length; i++) emailInByte[i] = Byte.valueOf(encryptedEmail[i]);
+                for(int i = 0; i < encryptedName.length; i++) nameInByte[i] = Byte.valueOf(encryptedName[i]);
+                if(GlobalFunctions.decrypt(emailInByte).equals(email)) {
+                	return GlobalFunctions.decrypt(nameInByte);
+                }
+            }
+            scanner.close();
+        }else {
+            throw new Exception("The file " + file.getName() + " does not exist");
+        }
+
+        return "";
+    }
+
+    public static synchronized boolean deleteUser(String email) throws Exception {
+        File file = new File("Users.txt");
+        boolean done = false;
+        Strings users = "";
+        if(file.exists()) {
+            Scanner scanner = new Scanner(file);
+            while(scanner.hasNext()) {
+                String encryptedUser = scanner.nextLine();
+                String [] encryptedEmail = encryptedUser.split("/")[0].split(" ");
+                byte [] emailInByte = new byte[encryptedEmail.length];
+                for(int i = 0; i < encryptedEmail.length; i++) emailInByte[i] = Byte.valueOf(encryptedEmail[i]);
+                if(!GlobalFunctions.decrypt(emailInByte).equals(email)){
+                    users += encryptedUser+"\n";
+                }else done = true;
+            }
+            scanner.close();
+        }
+
+        PrintWriter printWriter = new PrintWriter(file);
+        printWriter.print(users);
+        return done;
     }
 }

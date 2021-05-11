@@ -8,7 +8,7 @@ import java.io.*;
 public class CentralNode {
     public static void main(String [] args) {
         try{
-            ServerSocket listenSocket = new ServerSocket(GlobalFunctions.getIP("AUTH"));
+            ServerSocket listenSocket = new ServerSocket(GlobalFunctions.getPort("CENTRAL"));
             
             while(true) {
                 System.out.println("Waiting auth node...");
@@ -38,7 +38,7 @@ class ConnectionCentral extends Thread{
         try {
             this.socketIn = socket;
             this.isIn = new ObjectInputStream(this.socketIn.getInputStream());
-            this.osIn =  new ObjectOutputStream(this.socketIn.getOutputStream());
+            this.osIn =  new ObjectOutputStream(this.socketIn.getOutputStream());               
             this.start();
         } catch (Exception e) {
             System.out.println("ConnectionCentral: "+e.getMessage());

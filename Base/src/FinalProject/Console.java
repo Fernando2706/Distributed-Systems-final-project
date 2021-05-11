@@ -32,7 +32,7 @@ public class Console {
         return line;
     }
 
-    public String[] getCommandRegister() {
+    public String[] getCommandLogin() {
         String [] credentials = new String[2];
 
         try {
@@ -48,7 +48,7 @@ public class Console {
         return credentials;
     }
 
-    public String[] getCommandLogin() {
+    public String[] getCommandRegister() {
         String [] credentials = new String[3];
 
         try {
@@ -82,6 +82,21 @@ public class Console {
 
         return params;
     }
+
+    public String getEmail(){
+        String email = "";
+
+        try {
+            System.out.print("Enter an email ");
+            email = this.br.readLine();
+        } catch (IOException ex) {
+            System.out.println(ex.getMessage());
+        }
+
+        return email;
+    }
+
+
 
     public void setPrompt(String nick, String version) {
 		if(nick == null) nick = "v";

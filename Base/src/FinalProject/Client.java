@@ -31,6 +31,7 @@ public class Client {
             this.console = new Console(this.version);
             this.start = 0;
             this.start = 0;
+            this.nick = "";
             this.done = false;
         } catch (Exception e) {
             System.out.println("Exception init client: " + e.getMessage());
@@ -49,11 +50,16 @@ public class Client {
                         this.doConnectAuth(1);
                         String[] credentials = this.console.getCommandLogin();
                         this.doLogin(credentials);
-                        this.nick = credentials[0];
-                        this.console.setPrompt(this.nick, this.version);
                         this.doDisconnect();
                     } else
                         throw new Exception("There is another user connected");
+                } else if(cmd.equals("register")) {
+                    if(this.nick == "") {
+                        this.doConnectAuth(1);
+                        String [] credentials = this.console.getCommandRegister();
+                        this.doRegister(credentials);
+                        this.doDisconnet();
+                    }else throw new Exception("You can only register when they are no users online");
                 } else if (cmd.equals("filter")) {
                     if (this.nick != "") {
                         this.doConnectCentral();
@@ -80,10 +86,10 @@ public class Client {
 
     private void doLogin(String[] credentials) {
         try {
-            start = System.currentTimeMillis();
+            this.start = System.currentTimeMillis();
             ControlRequest cr = new ControlRequest("OP_LOGIN");
+            cr.getArgs().add(GlobalFunctions.encryptMessage(credentials[0]));
             cr.getArgs().add(GlobalFunctions.encryptMessage(credentials[1]));
-            cr.getArgs().add(GlobalFunctions.encryptMessage(credentials[2]));
 
             this.os.writeObject(cr);
 
@@ -92,8 +98,12 @@ public class Client {
 
             ControlResponse crs = (ControlResponse) this.is.readObject();
             this.done = true;
-
-            this.console.writeMessage(crs.getArgs().get(0).toString());
+            if(crs.getSubtype().equals("OP_LOGIN_OK")){
+                this.nick = crs.getArgs().get(0).toString();
+                this.console.setPrompt(this.nick, this.version);
+            }else if(crs.getSubtype().equals("OP_LOGIN_NOK")){
+                this.writeMessage("Login failed...");
+            }
             this.end = System.currentTimeMillis();
 
             GlobalFunctions.setLatency("ClientLogin",(this.end-this.start));
@@ -105,7 +115,7 @@ public class Client {
 
     private void doFilter(String[] params) {
         try {
-            start = System.currentTimeMillis();
+            this.start = System.currentTimeMillis();
             ControlRequest cr = new ControlRequest("OP_FILTER");
             cr.getArgs().add(params[0]);
             cr.getArgs().add(params[1]);
@@ -116,7 +126,12 @@ public class Client {
 
             ControlResponse crs = (ControlResponse) this.is.readObject();
             this.done=true;
-            end = System.currentTimeMillis();
+            if(crs.getSubtype().equals("OP_FILTER_OK")){
+                this.console.writeMessage(crs.getArgs().get(0).toString());
+            }else if(crs.getSubtype.equals("OP_FILTER_NOK")){
+                this.console.writeMessage("There was a problem while filtering the image");
+            }
+            this.end = System.currentTimeMillis();
             GlobalFunctions.setLatency("ClientFilter", (this.end-this.start));
 
         } catch (Exception e) {
@@ -124,20 +139,45 @@ public class Client {
         }
     }
 
+    private void doRegister(String [] credentials) {
+        try{
+            this.start = System.currentTimeMillis();
+            ControlRequest cr = new ControlRequest("OP_REGISTER");
+            cr.getArgs().add(GlobalFunctions.encryptedMessage(credentials[0]));
+            cr.getArgs().add(GlobalFunctions.encryptedMessage(credentials[1]));
+            cr.getArgs().add(GlobalFunctions.encryptedMessage(credentials[2]));
+
+            this.os.writeObject(cr);
+            Thread inactiveAuth = new Thread(new InactiveNode(this,"ClientRegister"));
+            inactiveAuth.start();
+
+            ControlResponse crs = (ControlResponse) this.is.readObject();
+            this.done = true;
+            if(crs.getSubtype().equals("OP_REGISTER_OK")) {
+                this.console.writeMessage("You have register successfuly");
+            }else if(crs.getSubtype().equals("OP_REGISTER_NOK")) {
+                this.console.writeMessage("There was a problem during the registration");
+            }
+            this.end = System.currentTimeMillis();
+            GlobalFunctions.setLatency("ClientRegister", (this.end-this.start));
+        }catch(Exception e) {
+            System.out.println("Exception doRegister (Client): " + e.getMessage());
+        }
+    }
+
     private void doConnectAuth(int count) {
         try {
+            if(count > GlobalFunctions.getExternalVariables("MAXAUTH")) throw new Exception("All the authentification nodes are disconnected");
             if (this.socket == null) {
                 this.socket = new Socket(GlobalFunctions.getIP("AUTH" + count), GlobalFunctions.getPort("AUTH" + count));
-
                 this.os = new ObjectOutputStream(this.socket.getOutputStream());
                 this.is = new ObjectInputStream(this.socket.getInputStream());
             }
         } catch (UncheckedIOException e) {
             System.out.println("Client (Auth)" + e.getMessage());
-
         } catch (IOException e) {
             System.out.println("Client (Auth)" + e.getMessage());
-
+            this.doConnectAuth(count++);
         } catch (Exception e) {
             System.out.println("Client (Auth)" + e.getMessage());
         }

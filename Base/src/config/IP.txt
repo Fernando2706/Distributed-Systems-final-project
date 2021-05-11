@@ -1,0 +1,2 @@
+CENTRAL localhost
+AUTH1 localhost
