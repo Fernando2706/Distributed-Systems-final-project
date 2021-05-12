@@ -15,7 +15,7 @@ public class Node2A {
 				System.out.println("Waiting node 2...");
 
 				Socket s = listenSocket.accept();
-				new ConnectionNodeA(2, GlobalFunctions.getExternalVariables("MAXNODES"), s);
+				new ConnectionNodeA(2, GlobalFunctions.getExternalVariables("MAXNODES"), s,args);
 
 			}
 		} catch (Exception e) {

@@ -5,6 +5,7 @@ import protocol.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Random;
 
 import Global.GlobalFunctions;
 
@@ -45,13 +46,23 @@ class ConnectionServer1 extends Thread{
 	public void run() {
 		try {
 			Request r = (Request) this.isCentral.readObject();
+			System.out.println("Tipo de peticion: "+r.getType());
 			if(r.getType().equals("CONTROL_REQUEST")) {
 				ControlRequest cr = (ControlRequest) r;
 				if(cr.getSubtype().equals("OP_FILTER")) {
 					this.doFilter(cr.getArgs().get(0).toString(), cr.getArgs().get(1).toString());
 				}
 			}else if(r.getType().equals("DATA_REQUEST")) {
-				
+				DataRequest dr = (DataRequest) r;
+				if(dr.getSubtype().equals("OP_CPU")) {
+					ControlResponse crsCPU = new ControlResponse("OP_CPU_OK");
+                    Random random = new Random();
+                    int rmd = random.nextInt(101);
+                    System.out.println(rmd);
+                    crsCPU.getArgs().add(rmd);
+                    this.osCentral.writeObject(crsCPU);
+                    this.doDisconnect();
+				}
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -62,10 +73,14 @@ class ConnectionServer1 extends Thread{
 		 try {
 			 if(filter.equals("FILTERA")) {
 				 this.doConnect("SPECIALNODEA");
-				 this.osRing.writeObject(new ControlRequest("OP_FILTER"));
+				 ControlRequest cr = new ControlRequest("OP_FILTER");
+				 cr.getArgs().add(GlobalFunctions.getLessToken("FILTERA.txt"));
+				 cr.getArgs().add(path);
+				 cr.getArgs().add(filter);
+				 this.osRing.writeObject(cr);
 			 }
 			 ControlResponse crs = (ControlResponse) this.isRing.readObject();
-			 //this.doDisconnect();
+			 this.doDisconnect();
 
 			this.osCentral.writeObject(crs);
 		} catch (IOException e) {
@@ -80,10 +95,8 @@ class ConnectionServer1 extends Thread{
 	 
 	 public void doConnect(String filter) {
 		 try {
-			 System.out.println("Estableciendo conexion con: "+filter);
 			if(this.socketRing == null) {
 				this.socketRing = new Socket(GlobalFunctions.getIP(filter),GlobalFunctions.getPort(filter));
-				System.out.println(socketRing.getLocalPort());
 				this.osRing = new ObjectOutputStream(this.socketRing.getOutputStream());
 				this.isRing = new ObjectInputStream(this.socketRing.getInputStream());
 			}

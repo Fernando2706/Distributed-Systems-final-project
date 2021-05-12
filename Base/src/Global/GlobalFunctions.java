@@ -268,4 +268,74 @@ public class GlobalFunctions {
         printWriter.close();
         return done;
     }
+    
+    public static synchronized int getLessToken(String file) {
+    	int token = 0;
+        try {
+        	File file1 = new File(file);
+			int ranking[] = new int[GlobalFunctions.getExternalVariables("MAXNODES")+1];
+			if(file1.exists()) {
+	            Scanner scanner = new Scanner(file1);
+	            int i = 0;
+	            while(scanner.hasNext()) {
+	            	
+	                ranking[i]= scanner.nextInt();
+	                i++;
+	            }
+	            int minToken=100;
+	            int index=-1;
+	            for (int j = 0; j < ranking.length; j++) {
+					if(ranking[j]<=minToken) {
+						minToken = ranking[j];
+						index = j;
+					}
+				}
+	            scanner.close();
+	            if(index !=-1) {
+	            	token = index;
+	            }
+	        }
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+        
+        return token;
+        
+
+    }
+    
+    public static synchronized void updateToken(String file, int position) {
+    	try {
+        	File file1 = new File(file);
+			int ranking[] = new int[GlobalFunctions.getExternalVariables("MAXNODES")+1];
+			String data = "";
+			if(file1.exists()) {
+	            Scanner scanner = new Scanner(file1);
+	            int i = 0;
+	            while(scanner.hasNext()) {
+	            	
+	                ranking[i]= scanner.nextInt();
+	                i++;
+	            }
+	            ranking[position] =ranking[position]+1;
+	            
+	            
+	            
+	            for(int d:ranking) {
+	            	data = data + d+" ";
+	            }
+	            
+	            scanner.close();
+	            System.out.println(data);
+	        }
+			PrintWriter printWriter = new PrintWriter(file1);
+	        printWriter.print(data);
+	        printWriter.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
 }

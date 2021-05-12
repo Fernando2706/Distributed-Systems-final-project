@@ -1,0 +1,8 @@
+module FilterApp
+{
+  interface Filter
+  {
+  string getFilterImage(in string path, in long filter);
+  oneway void shutdown();
+  };
+};
