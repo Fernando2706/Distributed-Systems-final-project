@@ -11,16 +11,14 @@ public class CentralNode {
             ServerSocket listenSocket = new ServerSocket(GlobalFunctions.getPort("CENTRAL"));
             
             while(true) {
-                System.out.println("Waiting auth node...");
+                System.out.println("Waiting central node... "+listenSocket.getInetAddress()+":"+listenSocket.getLocalPort());
                 Socket socket = listenSocket.accept();
                 System.out.println("Accepted connection from: " + socket.getInetAddress().toString());
             
-                new Connection(socket);
+                new ConnectionCentral(socket);
             }
         }catch(Exception e){
             System.out.println("Main (Auth): "+e.getMessage());
-        }catch(IOException e) {
-            System.out.println("Listen socket: " + e.getMessage());
         }
     }
 }
@@ -38,7 +36,10 @@ class ConnectionCentral extends Thread{
         try {
             this.socketIn = socket;
             this.isIn = new ObjectInputStream(this.socketIn.getInputStream());
-            this.osIn =  new ObjectOutputStream(this.socketIn.getOutputStream());               
+            this.osIn =  new ObjectOutputStream(this.socketIn.getOutputStream());  
+            this.socketservers = new Socket[GlobalFunctions.getExternalVariables("MAXSERVERS")];
+            this.osServers = new ObjectOutputStream[GlobalFunctions.getExternalVariables("MAXSERVERS")];
+            this.isServers = new ObjectInputStream[GlobalFunctions.getExternalVariables("MAXSERVERS")];
             this.start();
         } catch (Exception e) {
             System.out.println("ConnectionCentral: "+e.getMessage());
@@ -50,24 +51,34 @@ class ConnectionCentral extends Thread{
         try{
             Request r = (Request) this.isIn.readObject();
             if(r.getType().equals("CONTROL_REQUEST")) {
-                ControlResquest cr = (ControlRequest) r;
+                ControlRequest cr = (ControlRequest) r;
                 if(cr.getSubtype().equals("OP_LOGIN")) {
                     ControlResponse crs = new ControlResponse("OP_LOGIN_OK");
+                    System.out.println(cr.getSubtype());
                     this.osIn.writeObject(crs);
-                }else if(cr.getSubtype.equals("OP_FILTER")) {
+                }else if(cr.getSubtype().equals("OP_FILTER")) {
                     this.doConnect();
-                    this.doFilter();
+                    this.doFilter(cr.getArgs().get(0).toString(),cr.getArgs().get(1).toString());
                     this.doDisconnect();
                 }
             }
         }catch(ClassNotFoundException e){
             System.out.println("ClassNotFoundException run connectionCental: " + e.getMessage());
-        }
+        } catch (IOException e) {
+        	System.out.println(e.getMessage());
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
-    private void doFilter() {
+    private void doFilter(String path, String filter) {
         try{
-
+        	ControlRequest cr = new ControlRequest("OP_FILTER");
+        	cr.getArgs().add(path);
+        	cr.getArgs().add(filter);
+        	this.osServers[0].writeObject(cr);
+        	ControlResponse crs = (ControlResponse) this.isServers[0].readObject();
+        	this.osIn.writeObject(crs);
         }catch(Exception e){
             System.out.println("Exception doFilter connectionCentral: " + e.getMessage());
         }
@@ -77,6 +88,7 @@ class ConnectionCentral extends Thread{
         try {
             for(int i = 0; i< GlobalFunctions.getExternalVariables("MAXSERVERS");i++){
                 if(this.socketservers[i] == null){
+                	System.out.println("Trying to connect ..."+GlobalFunctions.getIP("SERVER"+(i+1))+":"+GlobalFunctions.getPort("SERVER"+(i+1)));
                     this.socketservers[i] = new Socket(GlobalFunctions.getIP("SERVER"+(i+1)),GlobalFunctions.getPort("SERVER"+(i+1)));
                     this.osServers[i] = new ObjectOutputStream(this.socketservers[i].getOutputStream());
                     this.isServers[i] = new ObjectInputStream(this.socketservers[i].getInputStream());

@@ -1,6 +1,7 @@
 package FinalProject;
 
-import java.utils.*;
+import Global.GlobalFunctions;
+
 import java.io.*;
 
 public class AdminNodeII {
@@ -27,7 +28,7 @@ public class AdminNodeII {
                 if(cmd.equals("register")) {
                     String [] credentials = this.console.getCommandRegister();
                     if(!GlobalFunctions.isUser(credentials[1])) {
-                        GlobalFunctions.addUser(credentials[0], credentials[1], credentials[2]);
+                        GlobalFunctions.addUser(GlobalFunctions.encryptMessage(credentials[0]), GlobalFunctions.encryptMessage(credentials[1]), GlobalFunctions.encryptMessage(credentials[2]));
                         this.console.writeMessage("You have register successfuly");
                     }else {
                         this.console.writeMessage("There was a problem during the registration");

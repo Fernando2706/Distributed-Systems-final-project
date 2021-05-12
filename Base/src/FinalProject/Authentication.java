@@ -19,8 +19,6 @@ public class Authentication {
             }
         } catch (Exception e) {
             System.out.println("Main (Auth): " + e.getMessage());
-        } catch (IOException e) {
-            System.out.println("Listen socket: " + e.getMessage());
         }
     }
 }
@@ -70,25 +68,27 @@ class Connection extends Thread {
         } catch (IOException e) {
             System.out.println("Readline connection (Auth): " + e.getMessage());
         }catch (Exception e){
-            this.osClient.writeObject(new ControlResponse("OP_REGISTER_NOK"));
+            try {
+            	this.osClient.writeObject(new ControlResponse("OP_REGISTER_NOK"));
+			} catch (Exception e2) {
+				// TODO: handle exception
+			}
         }
     }
 
     private void doLogin(byte[] email, byte[] password) {
         try {
             String emailDecrypt = GlobalFunctions.decrypt(email);
-            String passDecrypt = GlobalFuncitons.decrypt(password);
-
+            String passDecrypt = GlobalFunctions.decrypt(password);
             if (GlobalFunctions.isUser(emailDecrypt) && GlobalFunctions.getPassword(emailDecrypt).equals(passDecrypt)) {
                 ControlRequest cr = new ControlRequest("OP_LOGIN");
                 this.osCentral.writeObject(cr);
-
-                Thread inactiveCentral = new Thread(new InactiveCentral("AuthLogin"));
+                Thread inactiveCentral = new Thread(new InactiveCentral(this,"AuthLogin"));
                 inactiveCentral.start();
 
-                ControlResponse crs = (ControlRespose) this.isCentral.readObject();
+                ControlResponse crs = (ControlResponse) this.isCentral.readObject();
                 this.done = true;
-                crs.getArgs.add(GlobalFunctions.getUserName(emailDecrypt));
+                //crs.getArgs().add(GlobalFunctions.getUserName(emailDecrypt));
                 this.osClient.writeObject(crs);
                 GlobalFunctions.setLatency("AuthLogin", (this.end - this.start));
                 this.resetCurrentTime();
@@ -97,13 +97,20 @@ class Connection extends Thread {
             }
         } catch (Exception e) {
             System.out.println("doLogin (Auth): " + e.getMessage());
-            this.osClient.writeObject(new ControlResponse("OP_LOGIN_NOK"));
+            e.printStackTrace();
+            /*try {
+				this.osClient.writeObject(new ControlResponse("OP_LOGIN_NOK"));
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}*/
         }
     }
 
     private void doConnect() {
         try {
             if (this.sCentral == null) {
+            	System.out.println(GlobalFunctions.getIP("CENTRAL")+":"+GlobalFunctions.getPort("CENTRAL"));
                 this.sCentral = new Socket(GlobalFunctions.getIP("CENTRAL"), GlobalFunctions.getPort("CENTRAL"));
                 this.osCentral = new ObjectOutputStream(this.sCentral.getOutputStream());
                 this.isCentral = new ObjectInputStream(this.sCentral.getInputStream());
@@ -113,7 +120,7 @@ class Connection extends Thread {
         }
     }
 
-    private void doDisconnet() {
+    public void doDisconnet() {
         try {
             if (this.sCentral != null) {
                 this.osCentral.close();
@@ -177,9 +184,11 @@ class Connection extends Thread {
 
 class InactiveCentral implements Runnable {
     private Connection connection;
+    private String type;
 
-    public InactiveCentral(Connection connection) {
+    public InactiveCentral(Connection connection,String type) {
         this.connection = connection;
+        this.type = type;
     }
 
     @Override
@@ -194,13 +203,17 @@ class InactiveCentral implements Runnable {
 
         try {
             Thread.sleep(sleep);
-            if (!this.client.isDone()) {
-                this.client.doDisconnect();
-                GlobalFunctions.setLatency(this.type, GlobalFunctions.getLatency(this.client.getNumberClient()) * 2);
+            if (!this.connection.isDone()) {
+            	System.out.println("Central out");
+                this.connection.doDisconnet();
+                GlobalFunctions.setLatency(this.type, GlobalFunctions.getLatency(this.type) * 2);
             }
-            this.client.setDone(false);
+            this.connection.setDone(false);
         } catch (InterruptedException e) {
             System.out.println("InterruptedException run InactiveCentral: " + e.getMessage());
-        }
+        } catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 }

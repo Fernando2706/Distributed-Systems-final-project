@@ -10,7 +10,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class GlobalFunctions {
     static Cipher getCipher(boolean allowEncrypt) throws Exception {
-        final String private_key = "idbwidbwjNFJERNFEJNFEJIuhifbewbaicaojopqjpu3873ºkxnmknmakKAQIAJ3981276396^=)(/&/(ISJ";
+        final String private_key = "idbwidbwjNFJERNFEJNFEJIuhifbewbaicaojopqjpu3873kxnmknmakKAQIAJ3981276396";
         final MessageDigest digest = MessageDigest.getInstance("SHA-256");
         digest.update(private_key.getBytes("UTF-8"));
         final SecretKeySpec key = new SecretKeySpec(digest.digest(), 0, 16, "AES");
@@ -221,12 +221,15 @@ public class GlobalFunctions {
             while(scanner.hasNext()) {
                 String [] encryptedPair = scanner.nextLine().split("/");
             	String [] encryptedEmail = encryptedPair[0].split(" ");
+            	String [] encryptedPass = encryptedPair[1].split(" ");
             	String [] encryptedName = encryptedPair[2].split(" ");
+            	System.out.println(encryptedEmail.length+" "+encryptedPass.length);
                 byte [] emailInByte = new byte[encryptedEmail.length], nameInByte = new byte[encryptedName.length];
                 for(int i = 0; i < encryptedEmail.length; i++) emailInByte[i] = Byte.valueOf(encryptedEmail[i]);
                 for(int i = 0; i < encryptedName.length; i++) nameInByte[i] = Byte.valueOf(encryptedName[i]);
                 if(GlobalFunctions.decrypt(emailInByte).equals(email)) {
-                	return GlobalFunctions.decrypt(nameInByte);
+                	String aux =GlobalFunctions.decrypt(nameInByte);
+                	return aux;
                 }
             }
             scanner.close();
@@ -240,23 +243,29 @@ public class GlobalFunctions {
     public static synchronized boolean deleteUser(String email) throws Exception {
         File file = new File("Users.txt");
         boolean done = false;
-        Strings users = "";
+        String users = "";
+        int index = 0;
         if(file.exists()) {
             Scanner scanner = new Scanner(file);
             while(scanner.hasNext()) {
+            	
                 String encryptedUser = scanner.nextLine();
                 String [] encryptedEmail = encryptedUser.split("/")[0].split(" ");
                 byte [] emailInByte = new byte[encryptedEmail.length];
                 for(int i = 0; i < encryptedEmail.length; i++) emailInByte[i] = Byte.valueOf(encryptedEmail[i]);
                 if(!GlobalFunctions.decrypt(emailInByte).equals(email)){
-                    users += encryptedUser+"\n";
+                	System.out.println(index+"	"+users);
+                    users += (encryptedUser+"\n");
+                    
                 }else done = true;
+                index++;
             }
             scanner.close();
         }
-
+        System.out.println(users);
         PrintWriter printWriter = new PrintWriter(file);
         printWriter.print(users);
+        printWriter.close();
         return done;
     }
 }

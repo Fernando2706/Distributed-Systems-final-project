@@ -1,2 +1,6 @@
 CENTRAL localhost
 AUTH1 localhost
+SERVER1 localhost
+SPECIALNODEA localhost
+NODEA1 localhost
+NODEA2 localhost

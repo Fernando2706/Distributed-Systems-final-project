@@ -73,7 +73,9 @@ public class Console {
         try {
             System.out.print("Path to the image: ");
             params[0] = this.br.readLine();
-
+            System.out.println("GrayFilter: FILTERA");
+            System.out.println("LightFilter: FILTERC");
+            System.out.println("OppositedFilter: FILTERC");
             System.out.print("Type of filter: ");
             params[1] = this.br.readLine();
         } catch (IOException ex) {

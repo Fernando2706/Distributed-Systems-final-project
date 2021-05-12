@@ -31,8 +31,8 @@ public class Client {
             this.console = new Console(this.version);
             this.start = 0;
             this.start = 0;
-            this.nick = "";
             this.done = false;
+            this.nick="";
         } catch (Exception e) {
             System.out.println("Exception init client: " + e.getMessage());
         }
@@ -50,7 +50,7 @@ public class Client {
                         this.doConnectAuth(1);
                         String[] credentials = this.console.getCommandLogin();
                         this.doLogin(credentials);
-                        this.doDisconnect();
+                        this.doDisconnet();
                     } else
                         throw new Exception("There is another user connected");
                 } else if(cmd.equals("register")) {
@@ -99,10 +99,12 @@ public class Client {
             ControlResponse crs = (ControlResponse) this.is.readObject();
             this.done = true;
             if(crs.getSubtype().equals("OP_LOGIN_OK")){
-                this.nick = crs.getArgs().get(0).toString();
+                this.nick = "fernando";
+                //System.out.println(crs.getArgs().get(0).toString());
                 this.console.setPrompt(this.nick, this.version);
+                this.console.writeMessage("Login OK");
             }else if(crs.getSubtype().equals("OP_LOGIN_NOK")){
-                this.writeMessage("Login failed...");
+                this.console.writeMessage("Login failed...");
             }
             this.end = System.currentTimeMillis();
 
@@ -128,7 +130,7 @@ public class Client {
             this.done=true;
             if(crs.getSubtype().equals("OP_FILTER_OK")){
                 this.console.writeMessage(crs.getArgs().get(0).toString());
-            }else if(crs.getSubtype.equals("OP_FILTER_NOK")){
+            }else if(crs.getSubtype().equals("OP_FILTER_NOK")){
                 this.console.writeMessage("There was a problem while filtering the image");
             }
             this.end = System.currentTimeMillis();
@@ -143,9 +145,9 @@ public class Client {
         try{
             this.start = System.currentTimeMillis();
             ControlRequest cr = new ControlRequest("OP_REGISTER");
-            cr.getArgs().add(GlobalFunctions.encryptedMessage(credentials[0]));
-            cr.getArgs().add(GlobalFunctions.encryptedMessage(credentials[1]));
-            cr.getArgs().add(GlobalFunctions.encryptedMessage(credentials[2]));
+            cr.getArgs().add(GlobalFunctions.encryptMessage(credentials[0]));
+            cr.getArgs().add(GlobalFunctions.encryptMessage(credentials[1]));
+            cr.getArgs().add(GlobalFunctions.encryptMessage(credentials[2]));
 
             this.os.writeObject(cr);
             Thread inactiveAuth = new Thread(new InactiveNode(this,"ClientRegister"));
@@ -202,7 +204,7 @@ public class Client {
         }
     }
 
-    private void doDisconnet() {
+    public void doDisconnet() {
         try {
             if (this.socket != null) {
                 this.os.close();
@@ -364,12 +366,16 @@ class InactiveNode implements Runnable {
         try {
             Thread.sleep(sleep);
             if(!this.client.isDone()) {
-                this.client.doDisconnect();
-                GlobalFunctions.setLatency(this.type, GlobalFunctions.getLatency(this.client.getNumberClient())*2);
+            	System.out.println("Proxy out");
+                this.client.doDisconnet();
+                GlobalFunctions.setLatency(this.type, GlobalFunctions.getLatency(this.type)*2);
             }
             this.client.setDone(false);
         }catch(InterruptedException e) {
             System.out.println("InterruptedException run InactiveNode: " + e.getMessage());
-        }
+        } catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 }
