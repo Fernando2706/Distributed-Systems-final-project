@@ -2,12 +2,16 @@ package FinalProject;
 
 import protocol.*;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.UncheckedIOException;
 import java.net.Socket;
 import java.sql.ClientInfoStatus;
+
+import javax.imageio.ImageIO;
 
 import Global.GlobalFunctions;
 
@@ -117,9 +121,11 @@ public class Client {
 
     private void doFilter(String[] params) {
         try {
+        	BufferedImage image = ImageIO.read(new File(params[0]));
+        	ImageIO.write(image,"jpg",new File("//FERNANDO/publico/img/image.jpg"));
             this.start = System.currentTimeMillis();
             ControlRequest cr = new ControlRequest("OP_FILTER");
-            cr.getArgs().add(params[0]);
+            cr.getArgs().add("//FERNANDO/publico/img/image.jpg");
             cr.getArgs().add(params[1]);
 
             this.os.writeObject(cr);

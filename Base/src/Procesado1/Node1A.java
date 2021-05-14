@@ -88,6 +88,7 @@ class ConnectionNodeA extends Thread{
 							ControlResponse crs = new ControlResponse("OP_FILTER_OK");
 							crs.getArgs().add("Filter complete from node"+this.index+"and path is"+filterImpl.getFilterImage(cr.getArgs().get(1).toString(), 1));
 							this.osRight.writeObject(crs);
+							System.out.println("Done");
 							this.doDisconnect();
 							
 						}else {

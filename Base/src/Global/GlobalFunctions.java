@@ -338,4 +338,28 @@ public class GlobalFunctions {
 			e.printStackTrace();
 		}
     }
+    public static synchronized void updateLog(String file, String text) {
+    	try {
+        	File file1 = new File("log/"+file);
+			int ranking[] = new int[GlobalFunctions.getExternalVariables("MAXNODES")+1];
+			String data = "";
+			if(file1.exists()) {
+	            Scanner scanner = new Scanner(file1);
+	            int i = 0;
+	            while(scanner.hasNext()) {
+	            	
+	               data += scanner.nextLine()+"\n";
+	            }
+	            
+	            data +=text+"\n";
+	            scanner.close();
+	        }
+			PrintWriter printWriter = new PrintWriter(file1);
+	        printWriter.print(data);
+	        printWriter.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
 }
