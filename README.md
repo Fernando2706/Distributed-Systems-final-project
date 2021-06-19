@@ -1,6 +1,6 @@
 # sturdy-octo-spoon
 
-## Distributed Systems final project => Note: 10
+## Distributed Systems final project => qualification: 10
 
 You must implement an image filter service for a social network 
 • The purpose of the system is to avoid overloading the client terminal to extend the useful life of the batteries and reduce consumption 
